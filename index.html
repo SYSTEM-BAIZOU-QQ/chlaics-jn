@@ -85,7 +85,11 @@ footer{width:100%;margin-top:14px;text-align:center;font-size:11px;color:#9a917f
 .net-code-title{font-size:12.5px;color:#8a6a3a;font-weight:600;}
 .net-code{width:100%;min-height:60px;border:1px solid #d8c9a6;border-radius:8px;padding:8px;font-size:12px;background:#fff;font-family:ui-monospace,Consolas,monospace;resize:vertical;}
 .net-tip{font-size:11.5px;color:#9a917f;line-height:1.5;}
-</style></head><body><div class="wrap">
+.net-mode{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.net-mode-label{font-size:12.5px;color:#8a6a3a;font-weight:600;}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head><body><div class="wrap">
 <div id="menu">
 
 <div class="menu-title">棋 类 三 合 一</div>
@@ -153,6 +157,11 @@ footer{width:100%;margin-top:14px;text-align:center;font-size:11px;color:#9a917f
   </div>
 </div>
 <div class="netpanel" data-game="go" hidden>
+  <div class="net-mode">
+    <span class="net-mode-label">联机方式</span>
+    <button class="net-btn active" data-net="modeLocal">局域网</button>
+    <button class="net-btn" data-net="modePeer">公网</button>
+  </div>
   <div class="net-row">
     <button class="net-btn primary" data-net="create">创建房间</button>
     <button class="net-btn" data-net="join">加入房间</button>
@@ -167,7 +176,7 @@ footer{width:100%;margin-top:14px;text-align:center;font-size:11px;color:#9a917f
       <button class="net-btn primary" data-net="apply">粘贴后连接</button>
     </div>
   </div>
-  <div class="net-tip">同一WiFi：一方点「创建房间」复制代码发给对方；对方点「加入房间」粘贴代码，再把返回代码发回，点「粘贴后连接」</div>
+  <div class="net-tip" data-net="tip">局域网：同一WiFi，一方「创建房间」发代码，对方「加入房间」粘代码，再发回，点「粘贴后连接」。公网：不同网络也行，创建方发房间号，对方粘房间号即可</div>
 </div>
 <div class="board-shell"><canvas id="go-board"></canvas></div>
 <div class="panel">
@@ -204,6 +213,11 @@ footer{width:100%;margin-top:14px;text-align:center;font-size:11px;color:#9a917f
   </div>
 </div>
 <div class="netpanel" data-game="gomoku" hidden>
+  <div class="net-mode">
+    <span class="net-mode-label">联机方式</span>
+    <button class="net-btn active" data-net="modeLocal">局域网</button>
+    <button class="net-btn" data-net="modePeer">公网</button>
+  </div>
   <div class="net-row">
     <button class="net-btn primary" data-net="create">创建房间</button>
     <button class="net-btn" data-net="join">加入房间</button>
@@ -218,7 +232,7 @@ footer{width:100%;margin-top:14px;text-align:center;font-size:11px;color:#9a917f
       <button class="net-btn primary" data-net="apply">粘贴后连接</button>
     </div>
   </div>
-  <div class="net-tip">同一WiFi：一方点「创建房间」复制代码发给对方；对方点「加入房间」粘贴代码，再把返回代码发回，点「粘贴后连接」</div>
+  <div class="net-tip" data-net="tip">局域网：同一WiFi，一方「创建房间」发代码，对方「加入房间」粘代码，再发回，点「粘贴后连接」。公网：不同网络也行，创建方发房间号，对方粘房间号即可</div>
 </div>
 <div class="board-shell"><canvas id="gm-board"></canvas></div>
 <div class="panel">
@@ -250,6 +264,11 @@ footer{width:100%;margin-top:14px;text-align:center;font-size:11px;color:#9a917f
   </div>
 </div>
 <div class="netpanel" data-game="xq" hidden>
+  <div class="net-mode">
+    <span class="net-mode-label">联机方式</span>
+    <button class="net-btn active" data-net="modeLocal">局域网</button>
+    <button class="net-btn" data-net="modePeer">公网</button>
+  </div>
   <div class="net-row">
     <button class="net-btn primary" data-net="create">创建房间</button>
     <button class="net-btn" data-net="join">加入房间</button>
@@ -264,7 +283,7 @@ footer{width:100%;margin-top:14px;text-align:center;font-size:11px;color:#9a917f
       <button class="net-btn primary" data-net="apply">粘贴后连接</button>
     </div>
   </div>
-  <div class="net-tip">同一WiFi：一方点「创建房间」复制代码发给对方；对方点「加入房间」粘贴代码，再把返回代码发回，点「粘贴后连接」</div>
+  <div class="net-tip" data-net="tip">局域网：同一WiFi，一方「创建房间」发代码，对方「加入房间」粘代码，再发回，点「粘贴后连接」。公网：不同网络也行，创建方发房间号，对方粘房间号即可</div>
 </div>
 <div class="board-shell"><canvas id="xq-board"></canvas></div>
 <div class="panel">
@@ -296,18 +315,25 @@ function openGame(name){
 
 /* ===== 局域网联机（WebRTC 手动信令 + 数据通道） ===== */
 var Net = (function(){
-  var pc=null, ch=null, connected=false, game=null, mySide=null, isHost=false;
+  var pc=null, ch=null, peer=null, pconn=null, connected=false, game=null, mySide=null, isHost=false;
   function enc(o){ try{ return btoa(JSON.stringify(o)); }catch(e){ return ''; } }
   function dec(s){ try{ return JSON.parse(atob(s)); }catch(e){ return null; } }
   function waitGather(p){ return new Promise(function(res){
     if(p.iceGatheringState==='complete') return res();
     p.onicegatheringstatechange=function(){ if(p.iceGatheringState==='complete') res(); };
   }); }
+  function onMsg(m){ if(Net.handlers[m.game] && Net.handlers[m.game].onMove) Net.handlers[m.game].onMove(m); }
   function wire(c){
     c.onopen=function(){ connected=true; NetUI.onOpen(); };
-    c.onmessage=function(e){ try{ var m=JSON.parse(e.data); if(Net.handlers[m.game] && Net.handlers[m.game].onMove) Net.handlers[m.game].onMove(m); }catch(_){} };
+    c.onmessage=function(e){ try{ var m=JSON.parse(e.data); onMsg(m); }catch(_){} };
     c.onclose=function(){ connected=false; NetUI.onClose(); };
   }
+  function wireP(c){
+    c.on('open', function(){ connected=true; NetUI.onOpen(); });
+    c.on('data', function(d){ try{ var m=(typeof d==='string')?JSON.parse(d):d; onMsg(m); }catch(_){} });
+    c.on('close', function(){ connected=false; NetUI.onClose(); });
+  }
+  function newPeer(){ return new Peer({ debug:0 }); }
   return {
     get connected(){ return connected; },
     get game(){ return game; },
@@ -339,11 +365,30 @@ var Net = (function(){
       var d=dec(code); if(!d) return Promise.reject('无效代码');
       return pc.setRemoteDescription(new RTCSessionDescription(d.sdp));
     },
-    send:function(o){ if(ch && ch.readyState==='open') ch.send(JSON.stringify(o)); },
+    startNet:function(g){
+      game=g; mySide=(g==='xq')?'r':1; isHost=true;
+      return new Promise(function(res, rej){
+        peer=newPeer();
+        peer.on('open', function(id){ res(id); });
+        peer.on('connection', function(dc){ pconn=dc; wireP(dc); });
+        peer.on('error', function(e){ rej(e); });
+      });
+    },
+    joinNet:function(g, hostId){
+      game=g; mySide=(g==='xq')?'b':2; isHost=false;
+      return new Promise(function(res, rej){
+        peer=newPeer();
+        peer.on('open', function(){ var dc=peer.connect(hostId, {reliable:true}); pconn=dc; wireP(dc); res(); });
+        peer.on('error', function(e){ rej(e); });
+      });
+    },
+    send:function(o){ var s=JSON.stringify(o); if(ch && ch.readyState==='open') ch.send(s); else if(pconn && pconn.open) pconn.send(s); },
     close:function(){
       try{ if(ch) ch.close(); }catch(_){}
       try{ if(pc) pc.close(); }catch(_){}
-      pc=null; ch=null; connected=false; game=null; mySide=null; NetUI.reset();
+      if(pconn){ try{ pconn.close(); }catch(_){} }
+      if(peer){ try{ peer.destroy(); }catch(_){} }
+      pc=null; ch=null; peer=null; pconn=null; connected=false; game=null; mySide=null; NetUI.reset();
     }
   };
 })();
@@ -355,28 +400,58 @@ var NetUI = (function(){
     var el={
       create:q(panel,'[data-net="create"]'), join:q(panel,'[data-net="join"]'), cancel:q(panel,'[data-net="cancel"]'),
       copy:q(panel,'[data-net="copy"]'), apply:q(panel,'[data-net="apply"]'), status:q(panel,'[data-net="status"]'),
-      codebox:q(panel,'[data-net="codebox"]'), codetitle:q(panel,'[data-net="codetitle"]'), code:q(panel,'[data-net="code"]')
+      codebox:q(panel,'[data-net="codebox"]'), codetitle:q(panel,'[data-net="codetitle"]'), code:q(panel,'[data-net="code"]'),
+      modeLocal:q(panel,'[data-net="modeLocal"]'), modePeer:q(panel,'[data-net="modePeer"]')
     };
     panels[game]=el;
+    panel._mode='local';
+    function setMode(m){
+      if(Net.connected){ el.status.textContent='先断开当前连接再切换模式'; return; }
+      panel._mode=m;
+      el.modeLocal.classList.toggle('active', m==='local');
+      el.modePeer.classList.toggle('active', m==='peer');
+      el.codebox.hidden=true; panel._s=null; el.status.textContent='未连接';
+    }
+    el.modeLocal.addEventListener('click', function(){ setMode('local'); });
+    el.modePeer.addEventListener('click', function(){ setMode('peer'); });
     el.create.addEventListener('click', function(){
-      Net.startLocal(game).then(function(code){
-        el.status.textContent='已创建，等待对方加入…';
-        el.codetitle.textContent='把这段代码发给对方';
-        el.code.value=code; el.codebox.hidden=false; panel._s='host';
-      }).catch(function(e){ el.status.textContent='创建失败：'+(e&&e.message||e); });
+      if(panel._mode==='peer'){
+        Net.startNet(game).then(function(id){
+          el.status.textContent='已创建公网房间，等对方加入…';
+          el.codetitle.textContent='把房间号发给对方（对方在公网模式点「加入房间」粘房间号）';
+          el.code.value=id; el.codebox.hidden=false; panel._s='host';
+        }).catch(function(e){ el.status.textContent='创建失败：'+(e&&e.message||e); });
+      } else {
+        Net.startLocal(game).then(function(code){
+          el.status.textContent='已创建，等待对方加入…';
+          el.codetitle.textContent='把这段代码发给对方（同一WiFi）';
+          el.code.value=code; el.codebox.hidden=false; panel._s='host';
+        }).catch(function(e){ el.status.textContent='创建失败：'+(e&&e.message||e); });
+      }
     });
     el.join.addEventListener('click', function(){
-      panel._s='join'; el.status.textContent='请把对方的创建代码粘贴到下方';
-      el.codetitle.textContent='粘贴对方发来的创建代码';
-      el.code.value=''; el.codebox.hidden=false;
+      panel._s='join'; el.codebox.hidden=false; el.code.value='';
+      if(panel._mode==='peer'){
+        el.status.textContent='粘贴对方的公网房间号';
+        el.codetitle.textContent='粘贴创建方的房间号';
+      } else {
+        el.status.textContent='请把对方的创建代码粘贴到下方';
+        el.codetitle.textContent='粘贴对方发来的创建代码';
+      }
     });
     el.apply.addEventListener('click', function(){
       var code=el.code.value.trim(); if(!code){ el.status.textContent='请先粘贴代码'; return; }
       if(panel._s==='join'){
-        Net.join(game, code).then(function(answer){
-          el.codetitle.textContent='把这段代码发回对方（对方粘贴后点「粘贴后连接」）';
-          el.code.value=answer; el.status.textContent='已加入，正在连接…'; panel._s='joined';
-        }).catch(function(e){ el.status.textContent='加入失败：'+(e&&e.message||e); });
+        if(panel._mode==='peer'){
+          Net.joinNet(game, code).then(function(){
+            el.status.textContent='已发起连接，正在连接…'; el.codebox.hidden=true; panel._s='joining';
+          }).catch(function(e){ el.status.textContent='加入失败：'+(e&&e.message||e); });
+        } else {
+          Net.join(game, code).then(function(answer){
+            el.codetitle.textContent='把这段代码发回对方（对方粘贴后点「粘贴后连接」）';
+            el.code.value=answer; el.status.textContent='已加入，正在连接…'; panel._s='joined';
+          }).catch(function(e){ el.status.textContent='加入失败：'+(e&&e.message||e); });
+        }
       } else if(panel._s==='host'){
         Net.connect(code).then(function(){ el.status.textContent='已交换，正在建立连接…'; })
           .catch(function(e){ el.status.textContent='连接失败：'+(e&&e.message||e); });

@@ -176,7 +176,7 @@ footer{width:100%;margin-top:14px;text-align:center;font-size:11px;color:#9a917f
       <button class="net-btn primary" data-net="apply">粘贴后连接</button>
     </div>
   </div>
-  <div class="net-tip" data-net="tip">局域网：同一WiFi，一方「创建房间」发代码，对方「加入房间」粘代码，再发回，点「粘贴后连接」。公网：不同网络也行，创建方发房间号，对方粘房间号即可</div>
+  <div class="net-tip" data-net="tip">公网：不同网络也能连，创建方发房间号，对方粘房间号即连。局域网：才需同一WiFi，互发代码两次</div>
 </div>
 <div class="board-shell"><canvas id="go-board"></canvas></div>
 <div class="panel">
@@ -232,7 +232,7 @@ footer{width:100%;margin-top:14px;text-align:center;font-size:11px;color:#9a917f
       <button class="net-btn primary" data-net="apply">粘贴后连接</button>
     </div>
   </div>
-  <div class="net-tip" data-net="tip">局域网：同一WiFi，一方「创建房间」发代码，对方「加入房间」粘代码，再发回，点「粘贴后连接」。公网：不同网络也行，创建方发房间号，对方粘房间号即可</div>
+  <div class="net-tip" data-net="tip">公网：不同网络也能连，创建方发房间号，对方粘房间号即连。局域网：才需同一WiFi，互发代码两次</div>
 </div>
 <div class="board-shell"><canvas id="gm-board"></canvas></div>
 <div class="panel">
@@ -283,7 +283,7 @@ footer{width:100%;margin-top:14px;text-align:center;font-size:11px;color:#9a917f
       <button class="net-btn primary" data-net="apply">粘贴后连接</button>
     </div>
   </div>
-  <div class="net-tip" data-net="tip">局域网：同一WiFi，一方「创建房间」发代码，对方「加入房间」粘代码，再发回，点「粘贴后连接」。公网：不同网络也行，创建方发房间号，对方粘房间号即可</div>
+  <div class="net-tip" data-net="tip">公网：不同网络也能连，创建方发房间号，对方粘房间号即连。局域网：才需同一WiFi，互发代码两次</div>
 </div>
 <div class="board-shell"><canvas id="xq-board"></canvas></div>
 <div class="panel">
@@ -401,7 +401,7 @@ var NetUI = (function(){
       create:q(panel,'[data-net="create"]'), join:q(panel,'[data-net="join"]'), cancel:q(panel,'[data-net="cancel"]'),
       copy:q(panel,'[data-net="copy"]'), apply:q(panel,'[data-net="apply"]'), status:q(panel,'[data-net="status"]'),
       codebox:q(panel,'[data-net="codebox"]'), codetitle:q(panel,'[data-net="codetitle"]'), code:q(panel,'[data-net="code"]'),
-      modeLocal:q(panel,'[data-net="modeLocal"]'), modePeer:q(panel,'[data-net="modePeer"]')
+      modeLocal:q(panel,'[data-net="modeLocal"]'), modePeer:q(panel,'[data-net="modePeer"]'), tip:q(panel,'[data-net="tip"]')
     };
     panels[game]=el;
     panel._mode='local';
@@ -411,6 +411,9 @@ var NetUI = (function(){
       el.modeLocal.classList.toggle('active', m==='local');
       el.modePeer.classList.toggle('active', m==='peer');
       el.codebox.hidden=true; panel._s=null; el.status.textContent='未连接';
+      el.tip.textContent = m==='peer'
+        ? '公网：不用同一WiFi，不同网络也能连。创建方点「创建房间」得房间号，对方点「加入房间」粘房间号即连'
+        : '局域网：需同一WiFi。创建方发代码，对方粘代码再发回，点「粘贴后连接」';
     }
     el.modeLocal.addEventListener('click', function(){ setMode('local'); });
     el.modePeer.addEventListener('click', function(){ setMode('peer'); });
